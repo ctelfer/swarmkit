@@ -873,12 +873,24 @@ func (a *Allocator) doTaskAlloc(ctx context.Context, ev events.Event) {
 	nc.pendingTasks[t.ID] = t
 }
 
+func nodeIsWindows(node *api.Node) bool {
+	return node != nil &&
+		node.Description != nil &&
+		node.Description.Platform != nil &&
+		node.Description.Platform.OS == "windows"
+
+}
+
 func (a *Allocator) allocateNode(ctx context.Context, node *api.Node, existingAddressesOnly bool, networks []*api.Network) bool {
 	var allocated bool
 
 	nc := a.netCtx
 
 	for _, network := range networks {
+
+		if !nodeIsWindows(node) && !network.Spec.Ingress {
+			continue
+		}
 
 		var lbAttachment *api.NetworkAttachment
 		for _, na := range node.Attachments {
